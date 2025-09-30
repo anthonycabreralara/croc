@@ -4,6 +4,8 @@
 typedef unsigned long long U64;
 #define C64(x) x##ULL
 
+enum { white, black };
+
 void printBitboard(U64 bb) {
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file < 8; file++) {
@@ -14,6 +16,29 @@ void printBitboard(U64 bb) {
         printf("\n");
     }
     printf("\n");
+}
+
+U64 soutOne(U64 b) {return b >> 8;}
+U64 nortOne(U64 b) {return b << 8;}
+
+U64 wSinglePushTargets(U64 wpawns, U64 empty) {
+   return nortOne(wpawns) & empty;
+}
+
+U64 wDblPushTargets(U64 wpawns, U64 empty) {
+   const U64 rank4 = C64(0x00000000FF000000);
+   U64 singlePushs = wSinglePushTargets(wpawns, empty);
+   return nortOne(singlePushs) & empty & rank4;
+}
+
+U64 bSinglePushTargets(U64 bpawns, U64 empty) {
+   return soutOne(bpawns) & empty;
+}
+
+U64 bDoublePushTargets(U64 bpawns, U64 empty) {
+   const U64 rank5 = C64(0x000000FF00000000);
+   U64 singlePushs = bSinglePushTargets(bpawns, empty);
+   return soutOne(singlePushs) & empty & rank5;
 }
 
 int main() {
@@ -33,7 +58,15 @@ int main() {
     U64 blackKing    = 0x1000000000000000ULL;
     U64 pawns = whitePawns | blackPawns;
 
-    printf("Pawns only:\n");
-    printBitboard(pawns);
+    U64 occupied = whitePawns | whiteKnights | whiteBishops | whiteRooks | whiteQueens | whiteKing | blackPawns | blackKnights | blackBishops | blackRooks | blackQueens | blackKing;
+    U64 empty = ~occupied;
+
+    U64 whitePawnSinglePush = wSinglePushTargets(whitePawns, empty);
+    U64 whitePawnDoublePush = wDblPushTargets(whitePawns, empty);
+    U64 blackPawnSinglePush = bSinglePushTargets(blackPawns, empty);
+    U64 blackPawnDoublePush = bDoublePushTargets(blackPawns, empty);
+
+    printBitboard(blackPawnDoublePush);
+
     return 0;
 }
